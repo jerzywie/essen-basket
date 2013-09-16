@@ -10,5 +10,7 @@ pom.xml
 .lein-deps-sum
 .lein-failures
 .lein-plugins
+.lein-repl-history
 *.log
 *.orig
+*.tsv
