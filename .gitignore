@@ -13,4 +13,4 @@ pom.xml
 .lein-repl-history
 *.log
 *.orig
-*.tsv
+*tsv

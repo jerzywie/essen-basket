@@ -1,6 +1,8 @@
 (ns essen-basket.core
   (:require [essen-basket.sitehandling  :as site])
-  (:require [essen-basket.scrape        :as scrape]))
+  (:require [essen-basket.scrape        :as scrape])
+  (:gen-class :main true))
+
 
 
 (defn scrape-basket
@@ -29,3 +31,10 @@
   "Saves the basket rows to a text file in tsv format"
   [file username password]
  (scrape/write-file file (scrape-basket username password)))
+
+(defn -main
+  "The application's main function"
+  [& args]
+  (if (> 3 (count args))
+    (println "Usage <outputfile> <username> <password>")
+    (apply save-basket-to-file args)))

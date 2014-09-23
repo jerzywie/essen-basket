@@ -8,9 +8,12 @@
 
 (defn leadzeros [[k v]] [(format "%03d" (Integer/valueOf (name k))) v])
 
-;; transform members map in properties into map of members index
-(def members (into {} (map leadzeros (:members data/config-data))))
+(defn pad-name-tuple
+  [[n {:keys [pad]}]]
+  [(format "%03d" (Integer/valueOf pad)) (name n)])
 
+;; transform members map in properties into map of pad - member
+(def pad-member (into {} (map pad-name-tuple (:members data/config-data))))
 
 (def selector-odd-row-cells #{[:tr.gridrow :span] [:tr.gridrow :a]})
 (def selector-even-row-cells #{[:tr.gridalternatingrow :span] [:tr.gridalternatingrow :a]})
@@ -30,7 +33,7 @@
 (defn getrow [[x1 member code desc pack price vatcode x2 qty cost costvat]]
   (vector
      (stringcell member)
-     (get members (stringcell member) "none")
+     (get pad-member (stringcell member) "none")
      (codecell code)
      (stringcell desc)
      (stringcell pack)
