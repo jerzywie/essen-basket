@@ -1,7 +1,6 @@
 (ns essen-basket.scrape
   (:require [net.cgrand.enlive-html :as html])
   (:require [clojure.set            :as set])
-  (:require [clojure.java.io        :as io])
   (:require [clojure.string         :as string])
   (:require [essen-basket.config       :as data]))
 
@@ -46,13 +45,3 @@
 (defn scrape-order [source-html]
   (for [x (partition 11 (get-order-table source-html))]
      (getrow x)))
-
-(defn delimit [delimiter x y] (str x delimiter y))
-
-(defn tab-sep-line [row]
-  (str (reduce #(delimit "\t" % %2) row) "\n"))
-
-(defn write-file [out-file rows]
-  (spit out-file "" :append false)
-  (with-open [wrt (io/writer out-file)]
-    (doseq [row rows] (.write wrt (tab-sep-line row)))))

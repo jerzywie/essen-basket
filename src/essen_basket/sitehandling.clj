@@ -1,7 +1,8 @@
 (ns essen-basket.sitehandling
-  (:require [clj-http.client        :as client])
-  (:require [net.cgrand.enlive-html :as html])
-  (:require [essen-basket.config       :as data]))
+  (:require [essen-basket.config       :as data]
+            [essen-basket.scrape        :as scrape]
+            [net.cgrand.enlive-html :as html]
+            [clj-http.client        :as client]))
 
 
 (def login-url (:login-url data/config-data))
@@ -63,7 +64,9 @@
   (client/post login-url {:form-params form-vars :cookie-store cs}))
 
 ;; get the basket (page 1)
-(defn get-basket-page1 []  (client/get basket-url {:cookie-store cs}))
+(defn get-basket-page1 []
+  (println "basket-url: " basket-url)
+  (client/get basket-url {:cookie-store cs}))
 
 (defn basket-next? [html-str]
   "True if there is a next-page link in this HTML."
@@ -105,3 +108,20 @@
                            :cookie-store cs
                            :save-request? true
                            :debug-body true})  )
+
+(defn scrape-basket
+  "Scrapes basket off Essential site"
+  [username password]
+
+  (println "doing login")
+  (perform-login (get-login-vars username password))
+  (println "getting basket page 1")
+  (let [page1 (get-basket-page1)]
+    (println "looping over next pages")
+    (loop [order-rows (scrape/scrape-order (:body page1))
+           next-page-vars (get-basket-next-page-vars (:body page1))]
+      (if (nil? next-page-vars)
+        (sort order-rows)
+        (let  [resp (get-basket-next-page next-page-vars)]
+          (recur (into order-rows (scrape/scrape-order (:body resp)))
+                 (get-basket-next-page-vars (:body resp))))))))
