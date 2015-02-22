@@ -53,8 +53,12 @@
 (defn new-save-to-file
   "Saves the basket or specified orderid to file in tsv format"
   [{:keys [username password orderid]} file]
-  (println "file: " file " u:" username " p:" password " o:" orderid)
-  (save-basket-to-file file username password))
+  (println "File: " file " u:" username " p:" password " o:" orderid)
+  (try
+    (save-basket-to-file file username password)
+    (catch Exception e
+     (println (str "Error: " (.getMessage e) " Stacktrace: " (.getStackTrace e)))
+     (.printStackTrace e))))
 
 (defn -main
   "The application's main function"

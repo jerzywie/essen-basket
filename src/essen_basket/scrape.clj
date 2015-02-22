@@ -23,7 +23,7 @@
 (defn get-order-table [source-html]
   (html/select (html/html-snippet source-html) cell-selector))
 
-(defn stringcell [x] (string/trim (first (:content x))))
+(defn stringcell [x] (-> x :content first string/trim (string/replace #"\s+" " ")))
 
 (defn codecell [x] (-> x :content first :content first))
 
@@ -34,7 +34,7 @@
      (stringcell member)
      (get pad-member (stringcell member) "none")
      (codecell code)
-     (stringcell desc)
+     (stringcell desc) ;(string/replace desc #"\s+" " ")
      (stringcell pack)
      (numbers-only (stringcell  price))
      (stringcell vatcode)
