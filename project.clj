@@ -6,5 +6,6 @@
                  [org.clojure/tools.cli "0.3.1"]]
   :profiles {:dev {:dependencies [[midje "1.5.0"]]}
              :uberjar {:aot :all}}
+  :uberjar-name "essen-basket.jar"
   :main ^:skip-aot essen-basket.core
   :target-path "target/%s")
