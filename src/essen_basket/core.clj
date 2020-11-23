@@ -11,7 +11,7 @@
    ;; and positional.
    ["-o" "--orderid ORDERID" "Order id"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+    :validate [#(< 0 % 9999999) "Must be a number between 0 and 9999999"]]
    ["-u" "--username Username" "User-name"]
    ["-p" "--password Password" "Password"]
    ["-h" "--help"]])
