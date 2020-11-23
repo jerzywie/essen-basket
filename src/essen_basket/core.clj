@@ -44,28 +44,24 @@
 (defn save-basket-to-file
   "Saves the basket rows to a text file in tsv format"
   [file username password]
-  (try
-    (write-file file (site/scrape-basket username password))
-    (catch Exception e
-     (println (str "Error: " (.getMessage e) " Stacktrace: " (.getStackTrace e)))
-     (.printStackTrace e))))
+  (write-file file (site/scrape-basket username password)))
 
 (defn new-save-to-file
   "Saves the basket or specified orderid to file in tsv format"
   [{:keys [username password orderid]} file]
   (println "File: " file " u:" username " p:" password " o:" orderid)
-  (try
-    (save-basket-to-file file username password)
-    (catch Exception e
-     (println (str "Error: " (.getMessage e) " Stacktrace: " (.getStackTrace e)))
-     (.printStackTrace e))))
+  (save-basket-to-file file username password))
 
 (defn -main
   "The application's main function"
   [& args]
-  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
-    (cond
-     (:help options) (usage summary)
-     (not= (count arguments) 1) (usage summary)
-     errors (error-msg errors)
-     :else (new-save-to-file options (first arguments)))))
+  (try
+    (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+      (cond
+        (:help options) (usage summary)
+        (not= (count arguments) 1) (usage summary)
+        errors (error-msg errors)
+        :else (new-save-to-file options (first arguments))))
+    (catch Exception e
+      (println (str "Error: " (.getMessage e) " Stacktrace: " (.getStackTrace e)))
+      (.printStackTrace e))))
