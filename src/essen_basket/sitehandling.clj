@@ -7,6 +7,8 @@
 
 (def login-url (:login-url data/config-data))
 (def basket-url (:basket-url data/config-data))
+(def archive-basket-url (:archive-basket-url data/config-data))
+
 
 (defn get-page [url]
   "Downloads a document as an html-string."
