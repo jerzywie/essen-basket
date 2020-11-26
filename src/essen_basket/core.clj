@@ -46,11 +46,18 @@
   [file username password]
   (write-file file (site/scrape-basket username password)))
 
+(defn save-archive-order-to-file
+  "Saves an archived order to a text file in tsv format"
+  [file orderid username password]
+  (write-file file (site/scrape-archive-order orderid username password)))
+
 (defn new-save-to-file
   "Saves the basket or specified orderid to file in tsv format"
   [{:keys [username password orderid]} file]
   (println "File: " file " u:" username " p:" password " o:" orderid)
-  (save-basket-to-file file username password))
+  (if-not orderid
+    (save-basket-to-file file username password)
+    (save-archive-order-to-file file orderid username password)))
 
 (defn -main
   "The application's main function"

@@ -66,9 +66,9 @@
   (client/post login-url {:form-params form-vars :cookie-store cs}))
 
 ;; get the basket (page 1)
-(defn get-basket-page1 []
-  (println "basket-url: " basket-url)
-  (client/get basket-url {:cookie-store cs}))
+(defn get-basket-page1 [url]
+  (println "url in use: " url)
+  (client/get url {:cookie-store cs}))
 
 (defn basket-next? [html-str]
   "True if there is a next-page link in this HTML."
@@ -105,11 +105,34 @@
 
 (defn get-basket-next-page
   "Request next basket page."
-  [basket-next-page-vars]
-  (client/post basket-url {:form-params basket-next-page-vars
+  [basket-next-page-vars url]
+  (client/post url {:form-params basket-next-page-vars
                            :cookie-store cs
                            :save-request? true
-                           :debug-body true})  )
+                           :debug-body true}))
+
+(defn scrape-data
+  "Scrape data from the given url (assumes login is done)."
+  [url]
+  (println "getting page 1")
+  (let [page1 (get-basket-page1 url)]
+    (println "looping over next pages")
+    (loop [order-rows (scrape/scrape-order (:body page1))
+           next-page-vars (get-basket-next-page-vars (:body page1))]
+      (if (nil? next-page-vars)
+        (sort order-rows)
+        (let  [resp (get-basket-next-page next-page-vars url)]
+          (recur (into order-rows (scrape/scrape-order (:body resp)))
+                 (get-basket-next-page-vars (:body resp))))))))
+
+(defn scrape-archive-order
+  "Scrapes archived order off Essential site."
+  [orderid username password]
+
+  (println "doing login")
+  (perform-login (get-login-vars username password))
+  (let [url (str archive-basket-url orderid)]
+    (scrape-data url)))
 
 (defn scrape-basket
   "Scrapes basket off Essential site"
@@ -117,13 +140,4 @@
 
   (println "doing login")
   (perform-login (get-login-vars username password))
-  (println "getting basket page 1")
-  (let [page1 (get-basket-page1)]
-    (println "looping over next pages")
-    (loop [order-rows (scrape/scrape-order (:body page1))
-           next-page-vars (get-basket-next-page-vars (:body page1))]
-      (if (nil? next-page-vars)
-        (sort order-rows)
-        (let  [resp (get-basket-next-page next-page-vars)]
-          (recur (into order-rows (scrape/scrape-order (:body resp)))
-                 (get-basket-next-page-vars (:body resp))))))))
+  (scrape-data basket-url))
