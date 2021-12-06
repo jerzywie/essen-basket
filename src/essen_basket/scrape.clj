@@ -25,7 +25,7 @@
 
 (defn stringcell [x] (-> x :content first string/trim (string/replace #"\s+" " ")))
 
-(defn codecell [x] (-> x :content first :content first))
+(defn codecell [x] (-> x :content first))
 
 (defn numbers-only [val] (re-find #"[0-9.]+" val))
 
