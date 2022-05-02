@@ -54,21 +54,22 @@
        (insert-u-and-p username password)
        remove-unwanted-keys))
 
-;; set up a cookie store
-(def cs (clj-http.cookies/cookie-store))
-
 ;; this gets the login-response
 (defn perform-login
   "Do the login and capture the session cookies.
    This only needs to be called for the side-effect
    capturing the session cookies."
   [form-vars]
-  (client/post login-url {:form-params form-vars :cookie-store cs}))
+  (let [cs (clj-http.cookies/cookie-store)
+        resp (client/post login-url {:form-params form-vars :cookie-store cs})]
+    (if (nil? (get-in resp [:cookies "ETCExtranet"]))
+      (throw (ex-info "Login Failed." {:msg "Login Failed."}))
+      cs)))
 
 ;; get the basket (page 1)
-(defn get-basket-page1 [url]
+(defn get-basket-page1 [url cookie-store]
   (println "url in use: " url)
-  (client/get url {:cookie-store cs}))
+  (client/get url {:cookie-store cookie-store}))
 
 (defn basket-next? [html-str]
   "True if there is a next-page link in this HTML."
@@ -105,23 +106,23 @@
 
 (defn get-basket-next-page
   "Request next basket page."
-  [basket-next-page-vars url]
+  [basket-next-page-vars url cookie-store]
   (client/post url {:form-params basket-next-page-vars
-                           :cookie-store cs
+                           :cookie-store cookie-store
                            :save-request? true
                            :debug-body true}))
 
 (defn scrape-data
   "Scrape data from the given url (assumes login is done)."
-  [url]
+  [url cookie-store]
   (println "getting page 1")
-  (let [page1 (get-basket-page1 url)]
+  (let [page1 (get-basket-page1 url cookie-store)]
     (println "looping over next pages")
     (loop [order-rows (scrape/scrape-order (:body page1))
            next-page-vars (get-basket-next-page-vars (:body page1))]
       (if (nil? next-page-vars)
         (sort order-rows)
-        (let  [resp (get-basket-next-page next-page-vars url)]
+        (let  [resp (get-basket-next-page next-page-vars url cookie-store)]
           (recur (into order-rows (scrape/scrape-order (:body resp)))
                  (get-basket-next-page-vars (:body resp))))))))
 
@@ -129,15 +130,13 @@
   "Scrapes archived order off Essential site."
   [orderid username password]
 
-  (println "doing login")
-  (perform-login (get-login-vars username password))
-  (let [url (str archive-basket-url orderid)]
-    (scrape-data url)))
+  (let [cookie-store (perform-login (get-login-vars username password))
+        url (str archive-basket-url orderid)]
+    (scrape-data url cookie-store)))
 
 (defn scrape-basket
   "Scrapes basket off Essential site"
   [username password]
 
-  (println "doing login")
-  (perform-login (get-login-vars username password))
-  (scrape-data basket-url))
+  (let [cookie-store (perform-login (get-login-vars username password))]
+    (scrape-data basket-url cookie-store)))

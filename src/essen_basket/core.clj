@@ -13,7 +13,7 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 9999999) "Must be a number between 0 and 9999999"]]
    ["-u" "--username Username" "User-name"]
-   ["-p" "--password Password" "Password"]
+   ["-p" "--password" "Prompt for password"]
    ["-h" "--help"]])
 
 (defn usage [options-summary]
@@ -55,9 +55,13 @@
   "Saves the basket or specified orderid to file in tsv format"
   [{:keys [username password orderid]} file]
   (println "File: " file " u:" username " p:" password " o:" orderid)
-  (if-not orderid
-    (save-basket-to-file file username password)
-    (save-archive-order-to-file file orderid username password)))
+  (when password
+    (print "Enter password: ")
+    (flush)
+    (let [pwd-secret (read-line)]
+         (if-not orderid
+           (save-basket-to-file file username pwd-secret)
+           (save-archive-order-to-file file orderid username pwd-secret)))))
 
 (defn -main
   "The application's main function"
@@ -69,6 +73,9 @@
         (not= (count arguments) 1) (usage summary)
         errors (error-msg errors)
         :else (new-save-to-file options (first arguments))))
+    (catch clojure.lang.ExceptionInfo e
+      (let [ex (ex-data e)]
+        (println "Error: " (:msg ex) (:data ex))))
     (catch Exception e
-      (println (str "Error: " (.getMessage e) " Stacktrace: " (.getStackTrace e)))
+      (println (str "Exception: " (.getMessage e)))
       (.printStackTrace e))))
