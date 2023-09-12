@@ -19,29 +19,42 @@
 
 (def cell-selector (set/union selector-odd-row-cells selector-even-row-cells))
 
+(def cells-per-row 9)
 
 (defn get-order-table [source-html]
   (html/select (html/html-snippet source-html) cell-selector))
 
-(defn stringcell [x] (-> x :content first string/trim (string/replace #"\s+" " ")))
+(defn stringcell [html] (-> html :content first string/trim (string/replace #"\s+" " ")))
 
-(defn codecell [x] (-> x :content first))
+(defn codecell [html] (-> html :content first))
 
 (defn numbers-only [val] (re-find #"[0-9.]+" val))
 
-(defn getrow [[x1 member code desc pack price vatcode x2 qty cost costvat]]
-  (vector
-     (stringcell member)
-     (get pad-member (stringcell member) "none")
-     (codecell code)
-     (stringcell desc) ;(string/replace desc #"\s+" " ")
-     (stringcell pack)
-     (numbers-only (stringcell  price))
-     (stringcell vatcode)
-     (numbers-only (stringcell qty))
-     (numbers-only (stringcell cost))
-     (numbers-only (stringcell costvat))))
+(defn get-vatcode [vatamount] (if (= vatamount "0.00") "Z" "V"))
+
+(defn getrow [[member-h code-h desc-h pack-h price-h _ qty-h cost-h vatcost-h]]
+  (let [member      (stringcell member-h)
+        member-name (get pad-member member "none")
+        code        (codecell code-h)
+        desc        (stringcell desc-h)
+        pack        (stringcell pack-h)
+        price       (numbers-only (stringcell price-h))
+        qty         (numbers-only (stringcell qty-h))
+        cost        (numbers-only (stringcell cost-h))
+        costvat     (numbers-only (stringcell vatcost-h))
+        vatcode     (get-vatcode costvat)]
+    (vector
+     member
+     member-name
+     code
+     desc
+     pack
+     price
+     vatcode
+     qty
+     cost
+     costvat)))
 
 (defn scrape-order [source-html]
-  (for [x (partition 11 (get-order-table source-html))]
-     (getrow x)))
+  (for [row-html (partition cells-per-row (get-order-table source-html))]
+     (getrow row-html)))
